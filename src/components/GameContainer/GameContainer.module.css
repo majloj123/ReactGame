@@ -1,0 +1,8 @@
+.gameContainer {
+  position: relative;
+  width: 240px;
+  height: 208px;
+  background: url(../../../public/images/map.png) no-repeat no-repeat;
+  transform: scale(3);
+  image-rendering: pixelated;
+}

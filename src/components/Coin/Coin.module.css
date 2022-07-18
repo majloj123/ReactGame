@@ -1,0 +1,24 @@
+/* Coins */
+.coinSprite {
+  background: url("../../../public/images/coin.png") no-repeat no-repeat;
+  animation: coinFloat 0.8s linear infinite alternate-reverse;
+}
+
+@keyframes coinFloat {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(5px);
+  }
+}
+
+.coinShadow {
+  background: url("../../../public/images/coin-shadow.png") no-repeat no-repeat;
+}
+
+.gridCell {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+}

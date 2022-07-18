@@ -1,0 +1,9 @@
+.playerInfo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1em;
+  display: flex;
+  gap: 0.5em;
+  align-items: flex-end;
+}

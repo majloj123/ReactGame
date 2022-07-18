@@ -1,0 +1,68 @@
+/* Characters */
+.gridCell {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+}
+.character {
+  transition: transform 0.4s;
+}
+.character.you {
+  z-index: 1;
+}
+.character.you .characterYouArrow {
+  display: block;
+}
+.characterYouArrow {
+  display: none;
+  position: absolute;
+  top: -18px;
+  left: 5px;
+  width: 7px;
+  height: 5px;
+  background: url(../../../public/images/arrow.png) no-repeat no-repeat;
+}
+.characterSprite {
+  overflow: hidden;
+  top: -3px;
+  background: url(../../../public/images/characters.png);
+}
+.character[data-direction="right"] .characterSprite {
+  background-position-x: 16px;
+}
+.character[data-color="red"] .characterSprite {
+  background-position-y: -16px;
+}
+.character[data-color="orange"] .characterSprite {
+  background-position-y: -32px;
+}
+.character[data-color="yellow"] .characterSprite {
+  background-position-y: -48px;
+}
+.character[data-color="green"] .characterSprite {
+  background-position-y: -64px;
+}
+.character[data-color="purple"] .characterSprite {
+  background-position-y: -80px;
+}
+.characterShadow {
+  background: url(../../../public/images/shadow.png) no-repeat no-repeat;
+}
+
+.characterNameContainer {
+  position: absolute;
+  top: -12px;
+  left: -5px;
+  font-size: 5px;
+  padding: 1px 2px 1px;
+  border-radius: 3px;
+  background: #333;
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.characterCoins {
+  margin-left: 1px;
+  color: gold;
+}
