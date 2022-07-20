@@ -9,9 +9,9 @@ body {
   height: 100%;
   background: linear-gradient(
     180deg,
-    #64beff -50%,
-    #6e96ff 69.71%,
-    #2a65ff 150%
+    #090909 -50%,
+    #252525 69.71%,
+    #4d4c4c 150%
   );
   font-family: "Source Sans Pro", sans-serif;
   display: flex;

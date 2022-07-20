@@ -11,6 +11,8 @@ export const Character = ({ player, isUser }) => {
 
   return (
     <div
+      data-direction={player.direction}
+      data-color={player.color}
       style={{ transform: `translate3d(${left}, ${top}, 0)` }}
       className={`${style.character} ${style.gridCell} ${
         isUser ? style.you : null

@@ -22,5 +22,5 @@
 }
 
 .nameInput input[type="text"]:focus {
-  border-color: #f000ff;
+  border-color: #ddff00;
 }

@@ -1,7 +1,8 @@
 .colorBtn button {
   padding-left: 0.5em;
   padding-right: 0.5em;
-  background: #59ff5a;
+  background: #59d0ff;
+  color: white;
   border: 0;
   border-bottom: 2px solid #1e830b;
   cursor: pointer;

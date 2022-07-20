@@ -2,7 +2,6 @@ import { onAuthStateChanged, signInAnonymously } from "firebase/auth";
 import {
   child,
   get,
-  onChildAdded,
   onChildRemoved,
   onDisconnect,
   onValue,
@@ -11,8 +10,9 @@ import {
   set,
   update,
 } from "firebase/database";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { auth, database } from "../../firebase";
+import { PLAYER_COLORS } from "../../utils/constants";
 import {
   createName,
   getKeyString,
@@ -23,40 +23,43 @@ import {
 import { KeyPressListener } from "../../utils/KeyPressListener";
 import { CharacterList } from "../CharacterList/CharacterList";
 import CoinList from "../CoinList/CoinList";
+import PlayerInfo from "../PlayerInfo/PlayerInfo";
 import style from "./GameContainer.module.css";
 
 const GameContainer = () => {
   // my character
   const [playerId, setPlayerId] = useState();
-  const [player, setPlayer] = useState();
-  // const [playerRef, setPlayerRef] = useState();
 
   // global stuffs in game canvas
   const [players, setPlayers] = useState([]);
-  const [allPlayersRef, setAllPlayersRef] = useState(ref(database, "players"));
+  const [allPlayersRef] = useState(ref(database, "players"));
   const [coins, setCoins] = useState([]);
-  const [allCoinsRef, setAllCoinsRef] = useState(ref(database, "coins"));
+  const [allCoinsRef] = useState(ref(database, "coins"));
+  const loggedPlayer = useRef();
+  const loggedPlayerRef = useRef();
+
+  // let loggedPlayer.current = loggedPlayer.current;
 
   // functions
-  function attemptGrabCoin(x, y, player) {
-    const playerRef = ref(database, `players/${player.id}`);
-    // console.log(playerRef);
+  function attemptGrabCoin(x, y) {
     const key = getKeyString(x, y);
     const dbRef = ref(database);
 
+    //watcher for coins database
     get(child(dbRef, `coins`))
       .then((snapshot) => {
         const coins = snapshot.val();
+
+        if (!coins) return;
+
         if (coins[key]) {
           remove(ref(database, `coins/${key}`));
 
-          update(playerRef, {
-            name: "Mauu",
-          });
+          loggedPlayer.current.coins++;
 
-          // update(playerRef, {
-          //   coins: count + 1,
-          // });
+          update(loggedPlayerRef.current, {
+            coins: loggedPlayer.current.coins,
+          });
         }
       })
       .catch((error) => {
@@ -64,63 +67,71 @@ const GameContainer = () => {
       });
   }
 
-  function handleArrowPress(xChange = 0, yChange = 0, player) {
-    console.log("arrow press");
-    const playerRef = ref(database, `players/${player.id}`);
-    const newX = player.x + xChange;
-    const newY = player.y + yChange;
+  function handleArrowPress(xChange = 0, yChange = 0) {
+    const newX = loggedPlayer.current.x + xChange;
+    const newY = loggedPlayer.current.y + yChange;
+
     if (!isSolid(newX, newY)) {
       //move to the next space
-      player.x = newX;
-      player.y = newY;
+      loggedPlayer.current.x = newX;
+      loggedPlayer.current.y = newY;
+
       if (xChange === 1) {
-        player.direction = "right";
+        loggedPlayer.current.direction = "right";
       }
+
       if (xChange === -1) {
-        player.direction = "left";
+        loggedPlayer.current.direction = "left";
       }
-      set(playerRef, player);
-      attemptGrabCoin(newX, newY, player);
+
+      set(loggedPlayerRef.current, loggedPlayer.current);
+      attemptGrabCoin(newX, newY);
     }
   }
 
-  const gameInit = (user) => {
+  function colorUpdate() {
+    const mySkinIndex = PLAYER_COLORS.indexOf(loggedPlayer.current.color);
+    const nextColor = PLAYER_COLORS[mySkinIndex + 1] || PLAYER_COLORS[0];
+
+    loggedPlayer.current.color = nextColor;
+
+    update(loggedPlayerRef.current, {
+      color: loggedPlayer.current.color,
+    });
+  }
+
+  function nameUpdate(value) {
+    const newName = value || createName();
+    loggedPlayer.current.name = newName;
+    update(loggedPlayerRef.current, {
+      name: newName,
+    });
+  }
+
+  const gameInit = () => {
     // Keyboard settings
-    const activePlayer = user;
-    new KeyPressListener("ArrowUp", () =>
-      handleArrowPress(0, -1, activePlayer)
-    );
-    new KeyPressListener("ArrowDown", () =>
-      handleArrowPress(0, 1, activePlayer)
-    );
-    new KeyPressListener("ArrowLeft", () =>
-      handleArrowPress(-1, 0, activePlayer)
-    );
-    new KeyPressListener("ArrowRight", () =>
-      handleArrowPress(1, 0, activePlayer)
-    );
+    new KeyPressListener("ArrowUp", () => handleArrowPress(0, -1));
+    new KeyPressListener("ArrowDown", () => handleArrowPress(0, 1));
+    new KeyPressListener("ArrowLeft", () => handleArrowPress(-1, 0));
+    new KeyPressListener("ArrowRight", () => handleArrowPress(1, 0));
 
     // Gameboard update on change
 
     // **PLAYER UPDATE**
     onValue(allPlayersRef, (snapshot) => {
-      console.log("something in all players updated");
       let playerArray = [];
       snapshot.forEach((childSnapshot) => {
         const characterState = childSnapshot.val() || {};
         playerArray.push(characterState);
       });
+
       setPlayers(playerArray);
     });
-
-    // onChildAdded(allPlayersRef, (snapshot) => {
-    //   const addedPlayer = snapshot.val();
-    //   setPlayers([...players, addedPlayer]);
-    // });
 
     // Gameboard update after player log out
     onChildRemoved(allPlayersRef, (snapshot) => {
       const removedPlayerId = snapshot.val().id;
+
       setPlayers(players.filter((player) => player.id !== removedPlayerId));
     });
 
@@ -131,6 +142,7 @@ const GameContainer = () => {
         const coinState = childSnapshot.val() || {};
         coinsArray.push(coinState);
       });
+
       setCoins(coinsArray);
     });
 
@@ -141,17 +153,16 @@ const GameContainer = () => {
     //   console.log("coins", coins);
     //   setCoins(coins.filter((coin) => coin.x !== x && coin.y !== y));
     // });
+    // ***** NOT NEEDED FOR NOW *****
   };
 
   useEffect(() => {
-    console.log("renderiiiing auth");
     // user log in
     signInAnonymously(auth);
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("user is: ", user);
         setPlayerId(user.uid);
-        const userRef = ref(database, `players/${user.uid}`);
+        loggedPlayerRef.current = ref(database, `players/${user.uid}`);
         // setPlayerRef(userRef);
 
         const name = createName();
@@ -168,11 +179,12 @@ const GameContainer = () => {
           coins: 0,
         };
 
-        set(userRef, newPlayer);
-        setPlayer(newPlayer);
+        set(loggedPlayerRef.current, newPlayer);
+
+        loggedPlayer.current = newPlayer;
 
         //remove
-        onDisconnect(userRef).remove();
+        onDisconnect(loggedPlayerRef.current).remove();
 
         //Game start
         gameInit(newPlayer);
@@ -182,9 +194,16 @@ const GameContainer = () => {
   }, []);
 
   return (
-    <div className={style.gameContainer}>
-      <CharacterList playerList={players} playerId={playerId} />
-      <CoinList coinList={coins} />
+    <div>
+      <PlayerInfo
+        name={loggedPlayer.current?.name}
+        changeName={nameUpdate}
+        changeColor={colorUpdate}
+      />
+      <div className={style.gameContainer}>
+        <CharacterList playerList={players} playerId={playerId} />
+        <CoinList coinList={coins} />
+      </div>
     </div>
   );
 };
